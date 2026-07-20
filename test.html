@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConnectHub — Social Media</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #eef2ff;
+      color: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    body.page-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body.fade-out {
+      opacity: 0;
+      transform: translateY(-18px);
+    }
+
+    .frame {
+      width: min(1100px, 100%);
+      background: #ffffff;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 32px 100px rgba(15, 23, 42, 0.12);
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .hero {
+      padding: 48px 40px;
+      text-align: center;
+      background: linear-gradient(180deg, #3b82f6 0%, #60a5fa 100%);
+      color: #ffffff;
+      position: relative;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top center, rgba(255,255,255,0.18), transparent 45%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2.5rem, 3.5vw, 4rem);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 24px auto 0;
+      max-width: 680px;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: rgba(255,255,255,0.92);
+    }
+
+    .hero .get-started {
+      margin: 36px auto 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px 30px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.15);
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 700;
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hero .get-started:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.24);
+      box-shadow: 0 16px 28px rgba(15, 23, 42, 0.18);
+    }
+
+    .reviews {
+      margin-top: 44px;
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .review-card {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 24px;
+      padding: 24px;
+      text-align: left;
+      color: #f8fafc;
+      backdrop-filter: blur(12px);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .review-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.14);
+    }
+
+    .review-card h3 {
+      margin: 0 0 12px;
+      font-size: 1.05rem;
+    }
+
+    .stars {
+      color: #fde047;
+      margin-bottom: 16px;
+    }
+
+    .review-card p {
+      margin: 0;
+      line-height: 1.7;
+      opacity: 0.95;
+      font-size: 0.97rem;
+    }
+
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(15, 23, 42, 0.72);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      z-index: 20;
+      padding: 24px;
+    }
+
+    .auth-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .auth-card {
+      width: min(620px, 100%);
+      background: #f8fafc;
+      border-radius: 28px;
+      padding: 36px;
+      box-shadow: 0 40px 90px rgba(15, 23, 42, 0.25);
+      position: relative;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    .auth-overlay.visible .auth-card {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .close-overlay {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      border: none;
+      background: transparent;
+      color: #0f172a;
+      font-size: 1.8rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .auth-card h2 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: -0.03em;
+      color: #0f172a;
+    }
+
+    .auth-card p {
+      margin: 14px 0 0;
+      color: #475569;
+      line-height: 1.75;
+    }
+
+    .switch-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 28px 0 0;
+    }
+
+    .switch-button {
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      padding: 16px 18px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    .switch-button.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 14px 28px rgba(37, 99, 235, 0.18);
+    }
+
+    .switch-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .auth-forms {
+      display: grid;
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .auth-form {
+      display: none;
+      gap: 16px;
+    }
+
+    .auth-form.active {
+      display: grid;
+    }
+
+    .form-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-weight: 700;
+      color: #334155;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .file-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 18px;
+      border-radius: 9999px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      margin-top: 8px;
+      width: max-content;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .file-button:hover {
+      transform: translateY(-1px);
+      background: #eff6ff;
+      border-color: #93c5fd;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    .hidden-file {
+      display: none;
+    }
+
+    .avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .form-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .button-primary {
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .button-primary:hover {
+      transform: translateY(-1px);
+    }
+
+    .forgot-link {
+      border: none;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      padding: 12px 14px;
+      border-radius: 14px;
+      text-decoration: none;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    .forgot-link.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .forgot-link:hover {
+      background: #dbeafe;
+      transform: translateY(-1px);
+    }
+
+    .message {
+      min-height: 24px;
+      font-size: 0.98rem;
+      color: #0f766e;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 760px) {
+      .frame {
+        width: 100%;
+      }
+
+      .hero,
+      .auth-panel {
+        padding: 32px 24px;
+      }
+
+      .switch-buttons {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <section class="hero" id="landingSection">
+      <div class="hero-content">
+        <p style="text-transform: uppercase; letter-spacing: 0.26em; font-weight: 800; opacity: 0.85; margin-bottom: 18px;">Social media made simple</p>
+        <h1>Connect with friends, discover stories, and share what matters.</h1>
+        <p>ConnectHub brings your world together in one friendly place. Chat, share updates, react to posts, and stay close to what you care about.</p>
+        <a class="get-started" id="getStartedBtn" href="login.html">Get Started</a>
+
+        <div class="reviews" aria-label="App reviews">
+          <article class="review-card">
+            <div class="stars">★★★★★</div>
+            <h3>“My daily feed is now so easy to follow.”</h3>
+            <p>ConnectHub is fast, clean, and feels personal. The app is exactly what I wanted for staying in touch.</p>
+          </article>
+          <article class="review-card">
+            <div class="stars">★★★★★</div>
+            <h3>“A great way to keep friends updated.”</h3>
+            <p>I love the design and the quick sign-in flow. It makes sharing moments effortless and fun.</p>
+          </article>
+          <article class="review-card">
+            <div class="stars">★★★★★</div>
+            <h3>“Best social experience I’ve used recently.”</h3>
+            <p>The app feels fresh, welcoming, and helpful. The 5-star experience lives up to the hype.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <div class="auth-overlay" id="authOverlay" aria-hidden="true">
+      <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+        <button class="close-overlay" id="closeOverlay" aria-label="Close auth panel">×</button>
+        <div>
+          <h2 id="authTitle">Get started with ConnectHub</h2>
+          <p>Choose whether you want to sign in or sign up. Your private social feed starts here.</p>
+        </div>
+
+        <div class="switch-buttons" role="tablist" aria-label="Authentication options">
+          <button type="button" class="switch-button active" id="signInTab">Sign In</button>
+          <button type="button" class="switch-button" id="signUpTab">Sign Up</button>
+        </div>
+
+        <div class="auth-forms">
+          <form class="auth-form active" id="signInForm">
+            <div class="form-group">
+              <label for="signin-email">Email address</label>
+              <input id="signin-email" name="signinEmail" type="email" placeholder="you@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="signin-password">Password</label>
+              <input id="signin-password" name="signinPassword" type="password" placeholder="Enter your password" required minlength="6" />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="button-primary">Sign In</button>
+            </div>
+            <div class="form-group">
+              <button type="button" class="forgot-link" id="forgotPasswordBtn">Forgot password?</button>
+            </div>
+          </form>
+
+          <form class="auth-form" id="signUpForm">
+            <div class="form-group">
+              <label for="signup-name">What should we call you?</label>
+              <input id="signup-name" name="signupName" type="text" placeholder="Jane Doe" required />
+            </div>
+            <div class="form-group">
+              <label for="signup-email">Email address</label>
+              <input id="signup-email" name="signupEmail" type="email" placeholder="you@example.com" required />
+            </div>
+            <div class="form-group">
+              <label for="signup-password">Create password</label>
+              <input id="signup-password" name="signupPassword" type="password" placeholder="Choose a password" required minlength="6" />
+            </div>
+            <div class="form-group">
+              <label for="signup-image">Profile picture (optional)</label>
+              <input id="signup-image" name="signupImage" type="file" accept="image/*" class="hidden-file" />
+              <label class="file-button" for="signup-image">Choose image</label>
+              <div class="avatar-preview" id="signupImagePreview">No image selected</div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="button-primary">Sign Up</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="message" id="statusMessage"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = 'https://rnehrffbfrrcaopzbaor.supabase.co';
+    const supabaseKey = 'sb_publishable_8MdQrhDQd7YymNOMLWMzDg_vv_wvpf9';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const authOverlay = document.getElementById('authOverlay');
+    const closeOverlay = document.getElementById('closeOverlay');
+    const signInTab = document.getElementById('signInTab');
+    const signUpTab = document.getElementById('signUpTab');
+    const signInForm = document.getElementById('signInForm');
+    const signUpForm = document.getElementById('signUpForm');
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const signupImageInput = document.getElementById('signup-image');
+    const signupImagePreview = document.getElementById('signupImagePreview');
+
+    let failedSignInAttempts = 0;
+    let signupAvatarImage = null;
+
+    function updateSignupPreview() {
+      signupImagePreview.style.background = '#eff6ff';
+      if (!signupAvatarImage) {
+        const letter = signUpForm.signupName.value.trim()[0]?.toUpperCase() || 'A';
+        signupImagePreview.textContent = letter;
+      }
+      signupImagePreview.style.width = '120px';
+      signupImagePreview.style.height = '120px';
+      signupImagePreview.style.borderRadius = '9999px';
+      signupImagePreview.style.overflow = 'hidden';
+    }
+    signupImageInput.addEventListener('change', (event) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        signupAvatarImage = null;
+        signupImagePreview.textContent = 'No image selected';
+        updateSignupPreview();
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        signupAvatarImage = reader.result;
+        signupImagePreview.innerHTML = `<img src="${signupAvatarImage}" alt="Avatar preview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function showForm(formElement) {
+      signInForm.classList.toggle('active', formElement === signInForm);
+      signUpForm.classList.toggle('active', formElement === signUpForm);
+      signInTab.classList.toggle('active', formElement === signInForm);
+      signUpTab.classList.toggle('active', formElement === signUpForm);
+      if (formElement !== signInForm) {
+        forgotPasswordBtn.classList.remove('visible');
+      }
+      statusMessage.textContent = '';
+    }
+
+    function openAuthOverlay() {
+      authOverlay.classList.add('visible');
+      authOverlay.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => document.getElementById('signin-email').focus(), 250);
+    }
+
+    function closeAuthOverlay() {
+      authOverlay.classList.remove('visible');
+      authOverlay.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      statusMessage.textContent = '';
+    }
+
+    function showForm(formElement) {
+      authForms.forEach((form) => {
+        form.classList.toggle('active', form === formElement);
+      });
+      signInTab.classList.toggle('active', formElement === signInForm);
+      signUpTab.classList.toggle('active', formElement === signUpForm);
+      if (formElement !== signInForm) {
+        forgotPasswordBtn.classList.remove('visible');
+      }
+      statusMessage.textContent = '';
+    }
+
+    document.body.classList.add('page-visible');
+
+    async function checkNameExists(name) {
+      const { data, error } = await _supabase
+        .from('profiles')
+        .select('id')
+        .eq('display_name', name)
+        .maybeSingle();
+      if (error) {
+        console.warn('Name check skipped:', error.message);
+        return false;
+      }
+      return !!data;
+    }
+
+    async function checkUsernameExists(username) {
+      const { data, error } = await _supabase
+        .from('profiles')
+        .select('id')
+        .eq('username', username)
+        .maybeSingle();
+      if (error) {
+        console.warn('Username check skipped:', error.message);
+        return false;
+      }
+      return !!data;
+    }
+
+    async function createProfile(userId, username, displayName, avatarColor, avatarImage) {
+      const profile = {
+        user_id: userId,
+        username,
+        display_name: displayName,
+        avatar_color: avatarColor,
+        avatar_image: avatarImage || null
+      };
+      const { error } = await _supabase.from('profiles').insert(profile);
+      if (error) {
+        console.warn('Profile save skipped:', error.message);
+      }
+    }
+
+    async function signUp(name, email, password) {
+      const { data, error } = await _supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } }
+      });
+      if (error) {
+        console.error(error.message);
+        if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('email')) {
+          statusMessage.textContent = 'The email already exists.';
+        } else {
+          statusMessage.textContent = error.message;
+        }
+        statusMessage.style.color = '#b91c1c';
+        return null;
+      }
+      const user = data.user || data.session?.user;
+      console.log('Signed up successfully:', user);
+      return user;
+    }
+
+    async function signIn(email, password) {
+      const { data, error } = await _supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (error) {
+        console.error(error.message);
+        return { error };
+      }
+      console.log('Signed in:', data.user);
+      return { user: data.user };
+    }
+
+    function getResetRedirectUrl() {
+      if (window.location.protocol.startsWith('http')) {
+        return window.location.origin + '/reset.html';
+      }
+      return null;
+    }
+
+    async function resetPassword(email) {
+      const redirectTo = getResetRedirectUrl();
+      if (!redirectTo) {
+        statusMessage.textContent = 'Password reset requires serving the app over http://localhost, not opening files directly.';
+        statusMessage.style.color = '#b91c1c';
+        return;
+      }
+      const { error } = await _supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) {
+        console.error(error.message);
+        statusMessage.textContent = error.message;
+        statusMessage.style.color = '#b91c1c';
+        return;
+      }
+      statusMessage.textContent = 'Password reset email sent. Please check your inbox.';
+      statusMessage.style.color = '#0f766e';
+    }
+
+    getStartedBtn.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.location.href = 'login.html';
+    });
+
+    // The landing page no longer uses the overlay. Keep overlay logic only if you need it in the future.
+
+    signInTab.addEventListener('click', () => showForm(signInForm));
+    signUpTab.addEventListener('click', () => showForm(signUpForm));
+
+    forgotPasswordBtn.addEventListener('click', () => {
+      const email = signInForm.signinEmail.value.trim();
+      if (!email) {
+        statusMessage.textContent = 'Enter your email address to reset your password.';
+        statusMessage.style.color = '#b91c1c';
+        return;
+      }
+      resetPassword(email);
+    });
+
+    signInForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = signInForm.signinEmail.value.trim();
+      const password = signInForm.signinPassword.value;
+      if (!email || !password) {
+        statusMessage.textContent = 'Please enter both email and password to sign in.';
+        statusMessage.style.color = '#b91c1c';
+        return;
+      }
+      const result = await signIn(email, password);
+      if (result.error) {
+        failedSignInAttempts += 1;
+        statusMessage.textContent = result.error.message;
+        statusMessage.style.color = '#b91c1c';
+        if (failedSignInAttempts >= 3) {
+          forgotPasswordBtn.classList.add('visible');
+        }
+        return;
+      }
+      failedSignInAttempts = 0;
+      const displayName = result.user?.user_metadata?.name || email;
+      sessionStorage.setItem('welcomeName', displayName);
+      document.body.classList.add('fade-out');
+      setTimeout(() => {
+        window.location.href = 'welcome.html';
+      }, 300);
+    });
+
+    signUpForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const name = signUpForm.signupName.value.trim();
+      const email = signUpForm.signupEmail.value.trim();
+      const password = signUpForm.signupPassword.value;
+      if (!name || !email || !password) {
+        statusMessage.textContent = 'Please complete all fields to create your account.';
+        statusMessage.style.color = '#b91c1c';
+        return;
+      }
+      if (await checkNameExists(name)) {
+        statusMessage.textContent = 'That name already exists.';
+        statusMessage.style.color = '#b91c1c';
+        return;
+      }
+      const user = await signUp(name, email, password);
+      if (user) {
+        sessionStorage.setItem('welcomeName', name);
+        if (signupAvatarImage) {
+          sessionStorage.setItem('welcomeAvatarImage', signupAvatarImage);
+        } else {
+          sessionStorage.removeItem('welcomeAvatarImage');
+        }
+        document.body.classList.add('fade-out');
+        setTimeout(() => {
+          window.location.href = 'welcome.html';
+        }, 300);
+      }
+    });
+  </script>
+</body>
+</html>

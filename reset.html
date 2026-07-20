@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConnectHub — Reset Password</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #eef2ff;
+      color: #0f172a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    body.page-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .page {
+      width: min(620px, 100%);
+      background: #ffffff;
+      border-radius: 32px;
+      padding: 36px;
+      box-shadow: 0 36px 90px rgba(15, 23, 42, 0.16);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 18px;
+      font-size: 2rem;
+      letter-spacing: -0.04em;
+    }
+
+    p {
+      margin: 0 0 26px;
+      color: #475569;
+      line-height: 1.75;
+    }
+
+    .form-group {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    label {
+      font-weight: 700;
+      color: #334155;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .button-primary {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .button-primary:hover {
+      transform: translateY(-1px);
+    }
+
+    .message {
+      min-height: 24px;
+      margin-top: 16px;
+      color: #0f766e;
+      font-weight: 600;
+    }
+
+    .notice {
+      margin-top: 18px;
+      color: #475569;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Reset your password</h1>
+    <p id="statusText">Checking the link from your email...</p>
+
+    <form id="resetForm" style="display: none;">
+      <div class="form-group">
+        <label for="newPassword">New password</label>
+        <input id="newPassword" type="password" placeholder="Enter a new password" required minlength="6" />
+      </div>
+      <div class="form-group">
+        <label for="confirmPassword">Confirm password</label>
+        <input id="confirmPassword" type="password" placeholder="Repeat the password" required minlength="6" />
+      </div>
+      <button type="submit" class="button-primary">Save new password</button>
+    </form>
+
+    <div class="message" id="message"></div>
+    <p class="notice">If this page does not load correctly, make sure you are serving the files from a local web server rather than opening them directly from the file system.</p>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    document.body.classList.add('page-visible');
+
+    const supabaseUrl = 'https://rnehrffbfrrcaopzbaor.supabase.co';
+    const supabaseKey = 'sb_publishable_8MdQrhDQd7YymNOMLWMzDg_vv_wvpf9';
+    const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const resetForm = document.getElementById('resetForm');
+    const statusText = document.getElementById('statusText');
+    const message = document.getElementById('message');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+
+    function parseRecoveryParams() {
+      const params = new URLSearchParams(window.location.search + window.location.hash.replace(/^#/, '?'));
+      return {
+        type: params.get('type'),
+        access_token: params.get('access_token'),
+        refresh_token: params.get('refresh_token')
+      };
+    }
+
+    async function restoreSessionFromParams() {
+      const { type, access_token, refresh_token } = parseRecoveryParams();
+      if (type !== 'recovery' || !access_token) {
+        return null;
+      }
+      const { data, error } = await _supabase.auth.setSession({ access_token, refresh_token });
+      if (error) {
+        return { error };
+      }
+      return { data };
+    }
+
+    async function initReset() {
+      const fallback = await restoreSessionFromParams();
+      if (fallback?.error) {
+        statusText.textContent = 'Unable to restore session from the recovery link.';
+        message.textContent = fallback.error.message;
+        message.style.color = '#b91c1c';
+        return;
+      }
+      if (fallback?.data?.session) {
+        statusText.textContent = `Create a new password for ${fallback.data.session.user.email}.`;
+        resetForm.style.display = 'grid';
+        newPasswordInput.focus();
+        return;
+      }
+
+      if (window.location.protocol === 'file:') {
+        statusText.textContent = 'This reset page must be served from a local web server to complete password recovery.';
+        message.textContent = 'Run a simple server like `python -m http.server` or `npx serve` and open the page from http://localhost.';
+        message.style.color = '#b91c1c';
+        return;
+      }
+
+      const { data, error } = await _supabase.auth.getSessionFromUrl({ storeSession: true });
+      if (error) {
+        statusText.textContent = 'Unable to complete the recovery link.';
+        message.textContent = error.message;
+        message.style.color = '#b91c1c';
+        return;
+      }
+
+      if (!data.session) {
+        statusText.textContent = 'No recovery session was found.';
+        message.textContent = 'Please request a new password reset email from the app.';
+        message.style.color = '#b91c1c';
+        return;
+      }
+
+      statusText.textContent = `Create a new password for ${data.session.user.email}.`;
+      resetForm.style.display = 'grid';
+      newPasswordInput.focus();
+    }
+
+    resetForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      message.textContent = '';
+
+      const newPassword = newPasswordInput.value.trim();
+      const confirmPassword = confirmPasswordInput.value.trim();
+
+      if (!newPassword || newPassword.length < 6) {
+        message.textContent = 'Use a password with at least 6 characters.';
+        message.style.color = '#b91c1c';
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        message.textContent = 'Passwords do not match.';
+        message.style.color = '#b91c1c';
+        return;
+      }
+
+      const { data, error } = await _supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        message.textContent = error.message;
+        message.style.color = '#b91c1c';
+        return;
+      }
+
+      statusText.textContent = 'Your password has been reset successfully.';
+      message.textContent = 'You can now sign in immediately with your new password.';
+      message.style.color = '#0f766e';
+      resetForm.style.display = 'none';
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 1200);
+    });
+
+    initReset();
+  </script>
+</body>
+</html>

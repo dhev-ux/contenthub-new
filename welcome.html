@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ConnectHub — Welcome</title>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #0f172a;
+      background: #eef2ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 100%);
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    body.page-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    body.fade-out {
+      opacity: 0;
+      transform: translateY(-18px);
+    }
+
+    .page {
+      width: min(680px, 100%);
+      background: #ffffff;
+      border-radius: 32px;
+      padding: 40px;
+      box-shadow: 0 32px 90px rgba(15, 23, 42, 0.12);
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 2.4rem;
+      letter-spacing: -0.04em;
+    }
+
+    p {
+      margin: 0 0 32px;
+      color: #475569;
+      line-height: 1.75;
+      font-size: 1.05rem;
+    }
+
+    .button-primary {
+      width: 100%;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .button-primary:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>Welcome to ConnectHub!</h1>
+    <p id="welcomeText">Your profile is set and your account is ready to use.</p>
+    <button class="button-primary" id="continueBtn">Go to app</button>
+  </main>
+  <script>
+    document.body.classList.add('page-visible');
+    const welcomeText = document.getElementById('welcomeText');
+    const continueBtn = document.getElementById('continueBtn');
+
+    const name = sessionStorage.getItem('welcomeName');
+    const avatarImage = sessionStorage.getItem('welcomeAvatarImage');
+
+    if (name) {
+      welcomeText.textContent = `Nice to meet you, ${name}. Your account is ready to use.`;
+    }
+
+    if (avatarImage) {
+      const img = document.createElement('img');
+      img.src = avatarImage;
+      img.alt = 'Welcome avatar';
+      img.style.width = '120px';
+      img.style.height = '120px';
+      img.style.borderRadius = '50%';
+      img.style.objectFit = 'cover';
+      img.style.margin = '0 auto 24px';
+      document.querySelector('.page').insertBefore(img, welcomeText);
+    } else {
+      const circle = document.createElement('div');
+      circle.style.width = '120px';
+      circle.style.height = '120px';
+      circle.style.borderRadius = '50%';
+      circle.style.background = '#2563eb';
+      circle.style.margin = '0 auto 24px';
+      circle.style.display = 'grid';
+      circle.style.placeItems = 'center';
+      circle.style.color = '#ffffff';
+      circle.style.fontSize = '2rem';
+      circle.textContent = name?.trim()[0]?.toUpperCase() || 'A';
+      document.querySelector('.page').insertBefore(circle, welcomeText);
+    }
+
+    continueBtn.addEventListener('click', () => {
+      window.location.href = 'app.html';
+    });
+  </script>
+</body>
+</html>
